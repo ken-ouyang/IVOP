@@ -1,0 +1,100 @@
+
+#### general settings
+
+# name: 01_IRN_DB_x2_scratch_DIV2K
+# name: 01_IRN_DB_scratch_5K_RAIN_PRINCESS_no_zloss_no_rec
+# name: 01_IRN_DB_scratch_5K_RAIN_PRINCESS_no_zloss
+# name: test_wmf_twoBranches_4_2
+name: test_L0_smooth 
+use_tb_logger: False
+model: IRN
+distortion: sr
+scale: 1
+gpu_ids: [0]
+
+
+#### datasets
+ 
+datasets:
+  train:
+    name: DIV2K
+    mode: LQGT
+    # dataroot_GT: ~ # path to the original images
+    # dataroot_LQ: ~ # path to the images after the operators 
+    dataroot_GT: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/A_train/" 
+    dataroot_LQ: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/LLF_train/"
+
+    use_shuffle: true
+    # use_shuffle: false 
+    n_workers: 8  # per GPU
+    batch_size: 12 
+    GT_size: 144
+    use_flip: true ##
+    use_rot: true
+    color: RGB
+
+  val:
+    name: val_DIV2K
+    mode: LQGT
+    dataroot_GT: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/A_test/" 
+    dataroot_LQ: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/LLF_test/"
+
+  test:
+    name: val_DIV2K
+    mode: LQGT
+    dataroot_GT: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/A_test/" 
+    dataroot_LQ: "/disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/output_A_720/WMF_test/"
+
+#### network structures
+
+network_G:
+  which_model_G:
+      subnet_type: ConvNet
+  in_nc: 3
+  out_nc: 3
+  block_num: [8] #8
+  scale: 1
+  init: xavier
+
+
+#### path
+
+path:
+  # pretrain_model_G: /disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/experiments/jpg_WMF_twoBranches_4_1/models/100000_G.pth 
+  pretrain_model_G: /disk1/ouyang/proj/invert_image_op/Invertible-Image-Rescaling/experiments/jpg_WMF_twoBranches_4_1/models/100000_G.pth 
+  strict_load: false
+  resume_state: ~
+
+
+#### training settings: learning rate scheme, loss
+
+train:
+  lr_G: !!float 2e-4
+  beta1: 0.9
+  beta2: 0.999
+  niter: 100000
+  warmup_iter: -1  # no warm up
+
+  lr_scheme: MultiStepLR
+  lr_steps: [100000, 200000, 300000, 400000]
+  lr_gamma: 0.5
+
+  pixel_criterion_forw: l2
+  pixel_criterion_back: l2
+
+  manual_seed: 10
+
+  val_freq: !!float 1e4
+
+  lambda_fit_forw: 4.
+  lambda_rec_back: 1.
+  lambda_ce_forw: 0
+  weight_decay_G: !!float 1e-5
+  gradient_clipping: 10
+
+
+#### logger
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e4
